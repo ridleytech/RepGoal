@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		338431042E5609D6003E7ADE /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 338431032E5609D5003E7ADE /* StoreKit.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		33F1F4192E4D7CBA00B21359 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		338431032E5609D5003E7ADE /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
 		33F1F4062E4D7CB800B21359 /* RepGoal.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RepGoal.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		33F1F4182E4D7CBA00B21359 /* RepGoalTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RepGoalTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		33F1F4222E4D7CBA00B21359 /* RepGoalUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RepGoalUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -65,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				338431042E5609D6003E7ADE /* StoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,12 +91,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		338431022E5609D5003E7ADE /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				338431032E5609D5003E7ADE /* StoreKit.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		33F1F3FD2E4D7CB800B21359 = {
 			isa = PBXGroup;
 			children = (
 				33F1F4082E4D7CB800B21359 /* RepGoal */,
 				33F1F41B2E4D7CBA00B21359 /* RepGoalTests */,
 				33F1F4252E4D7CBA00B21359 /* RepGoalUITests */,
+				338431022E5609D5003E7ADE /* Frameworks */,
 				33F1F4072E4D7CB800B21359 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -406,6 +421,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RepGoal/RepGoal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"RepGoal/Preview Content\"";
@@ -437,6 +453,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = RepGoal/RepGoal.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"RepGoal/Preview Content\"";
