@@ -1,4 +1,5 @@
-
+//
+//  ProgressGraphView.swift (v17)
 import Charts
 import SwiftData
 import SwiftUI
@@ -33,7 +34,6 @@ struct ProgressGraphView: View {
             .padding()
             .navigationTitle(exercise.name + " Progress")
             .toolbar {
-                // Close on the leading side to match the other sheets
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Close") { dismiss() }
                 }

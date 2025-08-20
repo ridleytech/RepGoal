@@ -1,7 +1,7 @@
 //
 //  ContentViews.swift (v13)
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) private var context
@@ -11,6 +11,7 @@ struct ContentView: View {
     @State private var showingAdd = false
     @State private var showingLogFor: Exercise? = nil
     @State private var showingSettings = false
+    @State private var showingUpgradeAlert = false
     @State private var editingExercise: Exercise? = nil
     @State private var editingGoal: Exercise? = nil
     @State private var showingMacroFor: Exercise? = nil
@@ -110,8 +111,8 @@ struct ExerciseRow: View {
 struct WeekdayStripe: View {
     let scheduled: [Int]
     let palette: ThemePalette
-    private let symbols: [String] = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
-    private let indices: [Int] = Array(0..<7)
+    private let symbols: [String] = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
+    private let indices: [Int] = Array(0 ..< 7)
     var body: some View {
         HStack(spacing: 4) {
             ForEach(indices, id: \.self) { i in

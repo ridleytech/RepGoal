@@ -36,6 +36,7 @@ import SwiftData
     var startHour: Int
     var intervalHours: Int
     var customHours: [Int]
+    var hasFullUnlock: Bool = false
     var createdAt: Date
     var themeRaw: Int
     init(id: UUID = UUID(), modeRaw: Int = 0, startHour: Int = 7, intervalHours: Int = 3, customHours: [Int] = [7,10,13,16,19,22], createdAt: Date = Date(), themeRaw: Int = 0) {

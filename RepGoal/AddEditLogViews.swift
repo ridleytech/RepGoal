@@ -1,7 +1,7 @@
 //
 //  AddEditLogViews.swift (v14)
-import SwiftData
 import SwiftUI
+import SwiftData
 
 struct AddExerciseView: View {
     @Environment(\.modelContext) private var context
@@ -72,7 +72,7 @@ struct AddExerciseView: View {
     }
 
     private func shortLabel(for weekday: Int) -> String {
-        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
+        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
         return syms[(weekday - 1 + syms.count) % syms.count]
     }
 }
@@ -168,7 +168,7 @@ struct EditExerciseView: View {
     }
 
     private func shortLabel(for weekday: Int) -> String {
-        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
+        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
         return syms[(weekday - 1 + syms.count) % syms.count]
     }
 }
@@ -233,7 +233,7 @@ struct LogRepsView: View {
         let predicate = #Predicate<RepEntry> { entry in
             entry.exercise?.id == exID && entry.date >= start && entry.date < end
         }
-        let desc = FetchDescriptor<RepEntry>(predicate: predicate, sortBy: [SortDescriptor(\RepEntry.date, order: .forward)])
+        var desc = FetchDescriptor<RepEntry>(predicate: predicate, sortBy: [SortDescriptor(\RepEntry.date, order: .forward)])
 
         do {
             let todays = try context.fetch(desc)
