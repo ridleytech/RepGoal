@@ -1,8 +1,8 @@
 //
 //  ContentViews.swift (v10)
 //
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct ContentView: View {
     @Environment(\.modelContext) private var context
@@ -69,7 +69,7 @@ struct ContentView: View {
                 .sheet(item: $editingExercise) { ex in EditExerciseView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(item: $editingGoal) { ex in GoalEditorView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(item: $showingMacroFor) { ex in MacroPlannerView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
-                .sheet(item: $showingGraphFor) { ex in ProgressGraphView(exercise: ex).themed(palette: palette, isDark: isDark) }
+                .sheet(item: $showingGraphFor) { ex in ProgressGraphView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
         }
         .themed(palette: palette, isDark: isDark)
         .task { LocalReminderScheduler.rescheduleAll(using: context) }
@@ -112,8 +112,8 @@ struct ExerciseRow: View {
 struct WeekdayStripe: View {
     let scheduled: [Int]
     let palette: ThemePalette
-    private let symbols: [String] = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
-    private let indices: [Int] = Array(0..<7)
+    private let symbols: [String] = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
+    private let indices: [Int] = Array(0 ..< 7)
     var body: some View {
         HStack(spacing: 4) {
             ForEach(indices, id: \.self) { i in

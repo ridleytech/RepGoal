@@ -1,45 +1,49 @@
-//
-//  ProgressGraphView.swift (v10)
-//
-import SwiftUI
-import SwiftData
 import Charts
+import SwiftData
+import SwiftUI
 
 struct ProgressGraphView: View {
+    @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+
     let exercise: Exercise
+    let palette: ThemePalette
+
     @State private var points: [DataService.DailyPoint] = []
-    @State private var daysBack: Int = 30
 
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 16) {
                 if points.isEmpty {
-                    ContentUnavailableView("No Data", systemImage: "chart.bar", description: Text("Log some reps to see your progress."))
+                    ContentUnavailableView(
+                        "No Data",
+                        systemImage: "chart.xyaxis.line",
+                        description: Text("Log reps to see your progress.")
+                    )
                 } else {
-                    Chart(points) { p in
-                        LineMark(x: .value("Day", p.day), y: .value("Total", p.total))
-                        PointMark(x: .value("Day", p.day), y: .value("Total", p.total))
+                    Chart(points, id: \.id) {
+                        LineMark(x: .value("Day", $0.day), y: .value("Total", $0.total))
+                        PointMark(x: .value("Day", $0.day), y: .value("Total", $0.total))
                     }
                     .frame(height: 260)
                 }
-                Stepper("Days back: \(daysBack)", value: $daysBack, in: 7...180, step: 7)
-                HStack {
-                    Button("+5") { daysBack = min(180, daysBack + 5) }.buttonStyle(BorderedButtonStyle())
-                    Button("+10") { daysBack = min(180, daysBack + 10) }.buttonStyle(BorderedButtonStyle())
-                }
-                .padding(.bottom, 12)
                 Spacer()
             }
             .padding()
-            .navigationTitle("\(exercise.name) • Progress")
-            .task(id: daysBack) { await reload() }
-            .task { await reload() }
+            .navigationTitle(exercise.name + " Progress")
+            .toolbar {
+                // Close on the leading side to match the other sheets
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Close") { dismiss() }
+                }
+            }
         }
+        .task { await load() }
     }
 
-    @MainActor
-    private func reload() async {
-        do { points = try DataService.dailySeries(for: exercise, context: context, daysBack: daysBack) } catch { points = [] }
+    @MainActor private func load() async {
+        do {
+            points = try DataService.dailySeries(for: exercise, context: context, daysBack: 60)
+        } catch { points = [] }
     }
 }

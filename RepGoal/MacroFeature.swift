@@ -2,15 +2,15 @@
 //  MacroFeature.swift (v10)
 //
 import Foundation
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct FlexibleStringList: Codable {
     var items: [String] = []
     init(items: [String]) { self.items = items }
     init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
-        if let arr = try? c.decode([String].self) { self.items = arr }
+        if let arr = try? c.decode([String].self) { items = arr }
         else if let str = try? c.decode(String.self) {
             let t = str.trimmingCharacters(in: .whitespacesAndNewlines)
             let split = t.replacingOccurrences(of: "•", with: "\n")
@@ -18,10 +18,11 @@ struct FlexibleStringList: Codable {
                 .components(separatedBy: .newlines)
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
-            self.items = split.isEmpty ? [t] : split
-        } else { self.items = [] }
+            items = split.isEmpty ? [t] : split
+        } else { items = [] }
     }
 }
+
 struct FlexibleString: Codable {
     var string: String = ""
     init(_ s: String) { string = s }
@@ -46,13 +47,13 @@ struct MacroPlan: Codable {
 enum ChatGPTService {
     struct ErrorMsg: LocalizedError { let message: String; var errorDescription: String? { message } }
     static var apiBase: String = "http://localhost:6000/macro"
-    static func estimatePlan(exerciseName: String, targetTotal: Int, currentMax: Int, dailyGoal: Int) async throws -> String {
+    static func estimatePlan(exerciseName: String, targetTotal: Int, currentMax: Int) async throws -> String {
         guard let url = URL(string: apiBase) else { throw ErrorMsg(message: "Invalid API base URL") }
         var req = URLRequest(url: url); req.httpMethod = "POST"; req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         let body: [String: Any] = ["exerciseName": exerciseName, "currentMax": currentMax, "targetTotal": targetTotal]
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
         let (data, resp) = try await URLSession.shared.data(for: req)
-        guard let http = resp as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+        guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
             let txt = String(data: data, encoding: .utf8) ?? ""
             throw ErrorMsg(message: "API error \((resp as? HTTPURLResponse)?.statusCode ?? -1): \(txt)")
         }
@@ -65,6 +66,7 @@ struct MacroPlannerView: View {
     @Environment(\.modelContext) private var context
     let exercise: Exercise
     let palette: ThemePalette
+
     @State private var targetTotal: Int = 100
     @State private var currentMax: Int = 10
     @State private var isLoading: Bool = false
@@ -78,30 +80,108 @@ struct MacroPlannerView: View {
             List {
                 Section("📌 Exercise") {
                     HStack { Text("Name"); Spacer(); Text(exercise.name).foregroundStyle(.secondary) }
+                        .padding(.vertical, 2)
+
                     HStack { Text("Daily goal"); Spacer(); Text("\(exercise.dailyGoal)").foregroundStyle(.secondary).monospacedDigit() }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Stepper(value: $targetTotal, in: 1...100000, step: 5) { HStack { Text("🎯 Target session max"); Spacer(); Text("\(targetTotal)").foregroundStyle(.secondary).monospacedDigit() } }
-                        HStack { Button("+5") { targetTotal = min(100000, targetTotal + 5) }.buttonStyle(BorderedButtonStyle()); Button("+10") { targetTotal = min(100000, targetTotal + 10) }.buttonStyle(BorderedButtonStyle()) }
+                        .padding(.bottom, 6)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Stepper(value: $targetTotal, in: 1...100000, step: 5) {
+                            HStack { Text("🎯 Target session max"); Spacer(); Text("\(targetTotal)").foregroundStyle(.secondary).monospacedDigit() }
+                        }
+                        HStack(spacing: 10) {
+                            Button("+5") { targetTotal = min(100000, targetTotal + 5) }.buttonStyle(BorderedButtonStyle())
+                            Button("+10") { targetTotal = min(100000, targetTotal + 10) }.buttonStyle(BorderedButtonStyle())
+                        }
                     }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Stepper(value: $currentMax, in: 0...100000, step: 1) { HStack { Text("💪 Current session max"); Spacer(); Text("\(currentMax)").foregroundStyle(.secondary).monospacedDigit() } }
-                        HStack { Button("+5") { currentMax = min(100000, currentMax + 5) }.buttonStyle(BorderedButtonStyle()); Button("+10") { currentMax = min(100000, currentMax + 10) }.buttonStyle(BorderedButtonStyle()) }
+                    .padding(.vertical, 6)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Stepper(value: $currentMax, in: 0...100000, step: 1) {
+                            HStack { Text("💪 Current session max"); Spacer(); Text("\(currentMax)").foregroundStyle(.secondary).monospacedDigit() }
+                        }
+                        HStack(spacing: 10) {
+                            Button("+5") { currentMax = min(100000, currentMax + 5) }.buttonStyle(BorderedButtonStyle())
+                            Button("+10") { currentMax = min(100000, currentMax + 10) }.buttonStyle(BorderedButtonStyle())
+                        }
                     }
-                    Button { Task { await runEstimate() } } label: { HStack { if isLoading { ProgressView() }; Text(isLoading ? "Contacting API..." : "Ask ChatGPT") }.frame(maxWidth: .infinity) }.disabled(isLoading).buttonStyle(BorderedProminentButtonStyle())
+                    .padding(.vertical, 6)
+
+                    // Create Plan (formerly "Ask ChatGPT")
+                    Button {
+                        Task { await runEstimate() }
+                    } label: {
+                        HStack(spacing: 8) {
+                            if isLoading { ProgressView() }
+                            Text(isLoading ? "Creating Plan..." : "Create Plan")
+                        }
+                    }
+                    .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                    .padding(.top, 8)
+                    .padding(.bottom, 14) // extra breathing room below
                 }
+
                 if let p = plan {
                     Section("🧭 Summary") {
-                        if let days = p.estimated_days { HStack { Text("📅 Estimated days"); Spacer(); Text("\(days)").monospacedDigit() } }
-                        if let date = p.estimated_completion_date { HStack { Text("🗓️ Completion date"); Spacer(); Text(date).foregroundStyle(.secondary) } }
-                        if let daily = p.daily_recommendation?.string, !daily.isEmpty { VStack(alignment: .leading, spacing: 6) { Text("✅ Daily recommendation"); Text(daily).foregroundStyle(.secondary) } }
+                        if let days = p.estimated_days {
+                            HStack { Text("📅 Estimated days"); Spacer(); Text("\(days)").monospacedDigit() }
+                        }
+                        if let date = p.estimated_completion_date {
+                            HStack { Text("🗓️ Completion date"); Spacer(); Text(date).foregroundStyle(.secondary) }
+                        }
+                        if let daily = p.daily_recommendation?.string, !daily.isEmpty {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("✅ Daily recommendation")
+                                Text(daily).foregroundStyle(.secondary)
+                            }
+                            .padding(.top, 2)
+                        }
                     }
-                    if let weekly = p.weekly_notes?.items, !weekly.isEmpty { Section("📒 Weekly notes") { ForEach(weekly.indices, id: \.self) { i in Text(weekly[i]) } } }
-                    if let assumptions = p.assumptions?.items, !assumptions.isEmpty { Section("⚙️ Assumptions") { ForEach(assumptions.indices, id: \.self) { i in Text(assumptions[i]) } } }
-                    Section { Button { savePlan(p) } label: { Label(didSave ? "Saved" : "Save Plan", systemImage: didSave ? "checkmark.seal.fill" : "square.and.arrow.down").frame(maxWidth: .infinity) } .disabled(didSave) }
+                    .padding(.vertical, 2)
+
+                    if let weekly = p.weekly_notes?.items, !weekly.isEmpty {
+                        Section("📒 Weekly notes") {
+                            ForEach(weekly.indices, id: \.self) { i in Text(weekly[i]) }
+                        }
+                    }
+
+                    if let assumptions = p.assumptions?.items, !assumptions.isEmpty {
+                        Section("⚙️ Assumptions") {
+                            ForEach(assumptions.indices, id: \.self) { i in Text(assumptions[i]) }
+                        }
+                    }
+
+                    // Save Plan uses same filled style/color as Create Plan
+                    Section {
+                        Button {
+                            savePlan(p)
+                        } label: {
+                            Label(didSave ? "Saved" : "Save Plan",
+                                  systemImage: didSave ? "checkmark.seal.fill" : "square.and.arrow.down")
+                        }
+                        .buttonStyle(ThemedProminentButtonStyle(palette: palette))
+                        .disabled(didSave)
+                        .padding(.top, 4)
+                        .padding(.bottom, 10)
+                    }
                 }
-                if let parseError { Section("Parse error") { Text(parseError).foregroundStyle(.secondary).font(.footnote) } }
-                if !resultJSON.isEmpty { Section("Raw (JSON)") { Text(resultJSON).font(.system(.footnote, design: .monospaced)).textSelection(.enabled).lineLimit(10) } }
+
+                if let parseError {
+                    Section("Parse error") {
+                        Text(parseError).foregroundStyle(.secondary).font(.footnote)
+                    }
+                }
+
+                if !resultJSON.isEmpty {
+                    Section("Raw (JSON)") {
+                        Text(resultJSON)
+                            .font(.system(.footnote, design: .monospaced))
+                            .textSelection(.enabled)
+                            .lineLimit(10)
+                    }
+                }
             }
+            .listSectionSpacing(20) // looser section spacing overall
             .navigationTitle("Macro Planner")
             .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
         }
@@ -111,17 +191,40 @@ struct MacroPlannerView: View {
         isLoading = true; defer { isLoading = false }
         parseError = nil; didSave = false; plan = nil
         do {
-            let jsonString = try await ChatGPTService.estimatePlan(exerciseName: exercise.name, targetTotal: targetTotal, currentMax: currentMax, dailyGoal: exercise.dailyGoal)
+            let jsonString = try await ChatGPTService.estimatePlan(
+                exerciseName: exercise.name,
+                targetTotal: targetTotal,
+                currentMax: currentMax
+            )
             resultJSON = jsonString
             if let data = jsonString.data(using: .utf8) {
-                do { plan = try JSONDecoder().decode(MacroPlan.self, from: data) } catch { parseError = "Could not decode response as MacroPlan. Showing raw JSON." }
+                do {
+                    plan = try JSONDecoder().decode(MacroPlan.self, from: data)
+                } catch {
+                    parseError = "Could not decode response as MacroPlan. Showing raw JSON."
+                }
             }
-        } catch { resultJSON = "{\"error\":\"\(error.localizedDescription)\"}" }
+        } catch {
+            resultJSON = "{\"error\":\"\(error.localizedDescription)\"}"
+        }
     }
 
     private func savePlan(_ p: MacroPlan) {
-        let mg = MacroGoal(exerciseID: exercise.id, exerciseName: exercise.name, targetTotal: targetTotal, currentMax: currentMax, lastResultJSON: resultJSON, estimatedDays: p.estimated_days, completionDate: p.estimated_completion_date, dailyRecommendation: p.daily_recommendation?.string, weeklyNotes: p.weekly_notes?.items, assumptions: p.assumptions?.items)
-        context.insert(mg); try? context.save(); didSave = true
+        let mg = MacroGoal(
+            exerciseID: exercise.id,
+            exerciseName: exercise.name,
+            targetTotal: targetTotal,
+            currentMax: currentMax,
+            lastResultJSON: resultJSON,
+            estimatedDays: p.estimated_days,
+            completionDate: p.estimated_completion_date,
+            dailyRecommendation: p.daily_recommendation?.string,
+            weeklyNotes: p.weekly_notes?.items,
+            assumptions: p.assumptions?.items
+        )
+        context.insert(mg)
+        try? context.save()
+        didSave = true
     }
 }
 
@@ -132,54 +235,105 @@ struct SavedMacrosView: View {
 
     var body: some View {
         NavigationStack {
-            Group {
-                if macros.isEmpty { ContentUnavailableView("No Saved Plans", systemImage: "tray", description: Text("Use the Macro Planner to create and save a plan.")) }
-                else {
-                    List {
-                        ForEach(macros) { m in
-                            NavigationLink { MacroDetailView(macro: m) } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(m.exerciseName).font(.headline)
-                                    HStack {
-                                        if let days = m.estimatedDays { Text("📅 \(days) days").foregroundStyle(.secondary) }
-                                        if let date = m.completionDate, !date.isEmpty { Text("• 🗓️ \(date)").foregroundStyle(.secondary) }
-                                    }.font(.caption)
-                                }
-                            }
-                            .listRowBackground(Color.clear)
-                        }
-                        .onDelete { idx in for i in idx { context.delete(macros[i]) }; try? context.save() }
-                    }.listStyle(.plain)
+            content
+                .navigationTitle("Saved Plans")
+                .toolbar {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Close") { dismiss() }
+                    }
+                }
+        }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if macros.isEmpty {
+            ContentUnavailableView(
+                "No Saved Plans",
+                systemImage: "tray",
+                description: Text("Use the Macro Planner to create and save a plan.")
+            )
+        } else {
+            List {
+                ForEach(macros) { m in
+                    NavigationLink(destination: MacroDetailView(goal: m)) {
+                        MacroRow(macro: m)
+                    }
+                    .listRowBackground(Color.clear)
+                }
+                .onDelete(perform: delete)
+            }
+            .listStyle(.plain)
+        }
+    }
+
+    private func delete(at offsets: IndexSet) {
+        for i in offsets { context.delete(macros[i]) }
+        try? context.save()
+    }
+}
+
+private struct MacroRow: View {
+    let macro: MacroGoal
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(macro.exerciseName)
+                .font(.headline)
+            HStack(spacing: 6) {
+                if let days = macro.estimatedDays {
+                    Text("📅 \(days) days")
+                        .foregroundStyle(.secondary)
+                }
+                if let date = macro.completionDate, !date.isEmpty {
+                    Text("• 🗓️ \(date)")
+                        .foregroundStyle(.secondary)
                 }
             }
-            .navigationTitle("Saved Plans").toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
+            .font(.caption)
         }
     }
 }
 
 struct MacroDetailView: View {
-    @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
-    @Bindable var macro: MacroGoal
+    let goal: MacroGoal
 
     var body: some View {
-        List {
-            Section("📌 Exercise") {
-                HStack { Text("Name"); Spacer(); Text(macro.exerciseName).foregroundStyle(.secondary) }
-                HStack { Text("🎯 Target total"); Spacer(); Text("\(macro.targetTotal)").foregroundStyle(.secondary).monospacedDigit() }
-                HStack { Text("💪 Current max"); Spacer(); Text("\(macro.currentMax)").foregroundStyle(.secondary).monospacedDigit() }
-                HStack { Text("Saved"); Spacer(); Text(macro.createdAt.formatted(date: .abbreviated, time: .shortened)).foregroundStyle(.secondary) }
+        NavigationStack {
+            List {
+                Section("Summary") {
+                    if let days = goal.estimatedDays {
+                        HStack { Text("Estimated days"); Spacer(); Text("\(days)") }
+                    }
+                    if let date = goal.completionDate {
+                        HStack { Text("Completion date"); Spacer(); Text(date) }
+                    }
+                    if let rec = goal.dailyRecommendation {
+                        VStack(alignment: .leading) {
+                            Text("Daily recommendation")
+                            Text(rec).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                if let weekly = goal.weeklyNotes, !weekly.isEmpty {
+                    Section("Weekly notes") { ForEach(weekly, id: \.self) { Text($0) } }
+                }
+                if let assumptions = goal.assumptions, !assumptions.isEmpty {
+                    Section("Assumptions") { ForEach(assumptions, id: \.self) { Text($0) } }
+                }
+                Section("Raw JSON") {
+                    Text(goal.lastResultJSON)
+                        .font(.system(.footnote, design: .monospaced))
+                }
             }
-            Section("🧭 Summary") {
-                if let days = macro.estimatedDays { HStack { Text("📅 Estimated days"); Spacer(); Text("\(days)").monospacedDigit() } }
-                if let date = macro.completionDate, !date.isEmpty { HStack { Text("🗓️ Completion date"); Spacer(); Text(date).foregroundStyle(.secondary) } }
-                if let daily = macro.dailyRecommendation, !daily.isEmpty { VStack(alignment: .leading, spacing: 6) { Text("✅ Daily recommendation"); Text(daily).foregroundStyle(.secondary) } }
+            .navigationTitle(goal.exerciseName)
+            .toolbar {
+                // Put Close on the trailing side so it’s away from the back chevron
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Close") { dismiss() }
+                }
             }
-            if let weekly = macro.weeklyNotes, !weekly.isEmpty { Section("📒 Weekly notes") { ForEach(weekly.indices, id: \.self) { i in Text(weekly[i]) } } }
-            if let assumptions = macro.assumptions, !assumptions.isEmpty { Section("⚙️ Assumptions") { ForEach(assumptions.indices, id: \.self) { i in Text(assumptions[i]) } } }
-            if !macro.lastResultJSON.isEmpty { Section("Raw (JSON)") { Text(macro.lastResultJSON).font(.system(.footnote, design: .monospaced)).textSelection(.enabled).lineLimit(10) } }
         }
-        .navigationTitle("Plan Details")
-        .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
     }
 }
