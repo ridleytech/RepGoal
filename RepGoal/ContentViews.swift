@@ -12,6 +12,7 @@ struct ContentView: View {
     @State private var showingLogFor: Exercise? = nil
     @State private var showingSettings = false
     @State private var showingUpgradeAlert = false
+    @State private var showingUpgradeSheet = false
     @State private var editingExercise: Exercise? = nil
     @State private var editingGoal: Exercise? = nil
     @State private var showingMacroFor: Exercise? = nil
@@ -51,6 +52,16 @@ struct ContentView: View {
         }
     }
 
+    private func handleAddExerciseTapped() {
+        if !settings!.hasFullUnlock && exercises.count >= 3 {
+            print("Showing upgrade alert")
+            showingUpgradeAlert = true
+        } else {
+            print("Showing add exercise view")
+            showingAdd = true
+        }
+    }
+
     var body: some View {
         NavigationStack {
             mainContent
@@ -59,7 +70,8 @@ struct ContentView: View {
                     ToolbarItem(placement: .topBarLeading) { Button { LocalReminderScheduler.rescheduleAll(using: context) } label: { Image(systemName: "bell.badge") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSaved = true } label: { Image(systemName: "bookmark") } }
                     ToolbarItem(placement: .topBarTrailing) { Button { showingSettings = true } label: { Image(systemName: "gearshape") } }
-                    ToolbarItem(placement: .topBarTrailing) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
+//                    ToolbarItem(placement: .topBarTrailing) { Button { showingAdd = true } label: { Image(systemName: "plus") } }
+                    ToolbarItem(placement: .topBarTrailing) { Button { handleAddExerciseTapped() } label: { Image(systemName: "plus") } }
                 }
                 .sheet(isPresented: $showingAdd) { AddExerciseView(palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(isPresented: $showingSettings) { SettingsView().themed(palette: ThemeKit.palette(settings), isDark: ThemeKit.isDark(settings)) }
@@ -69,6 +81,11 @@ struct ContentView: View {
                 .sheet(item: $editingGoal) { ex in GoalEditorView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(item: $showingMacroFor) { ex in MacroPlannerView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
                 .sheet(item: $showingGraphFor) { ex in ProgressGraphView(exercise: ex, palette: palette).themed(palette: palette, isDark: isDark) }
+                .sheet(isPresented: $showingUpgradeSheet) { UpgradeView() }
+                .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
+                    Button("Not now", role: .cancel) {}
+                    Button("Upgrade") { showingUpgradeSheet = true }
+                } message: { Text("Free plan allows up to 3 goals. Upgrade to unlock more and Macro Plans.") }
         }
         .themed(palette: palette, isDark: isDark)
         .task { LocalReminderScheduler.rescheduleAll(using: context) }

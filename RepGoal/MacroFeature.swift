@@ -6,11 +6,14 @@ import SwiftUI
 
 struct FlexibleStringList: Codable {
     var items: [String] = []
+
     init(items: [String]) { self.items = items }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.singleValueContainer()
-        if let arr = try? c.decode([String].self) { items = arr }
-        else if let str = try? c.decode(String.self) {
+        if let arr = try? c.decode([String].self) {
+            items = arr
+        } else if let str = try? c.decode(String.self) {
             let t = str.trimmingCharacters(in: .whitespacesAndNewlines)
             let split = t.replacingOccurrences(of: "•", with: "\n")
                 .replacingOccurrences(of: " - ", with: "\n")
@@ -18,7 +21,14 @@ struct FlexibleStringList: Codable {
                 .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
                 .filter { !$0.isEmpty }
             items = split.isEmpty ? [t] : split
-        } else { items = [] }
+        } else {
+            items = []
+        }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer()
+        try c.encode(items)
     }
 }
 
@@ -65,6 +75,9 @@ enum ChatGPTService {
 struct MacroPlannerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
+
+    @Query private var settingsArray: [AppSettings] // ← add this here
+
     let exercise: Exercise
     let palette: ThemePalette
     @State private var targetTotal: Int = 100
@@ -74,6 +87,14 @@ struct MacroPlannerView: View {
     @State private var plan: MacroPlan? = nil
     @State private var parseError: String? = nil
     @State private var didSave: Bool = false
+    @State private var showingUpgradeSheet = false
+    @State private var showingUpgradeAlert = false
+
+    private var settings: AppSettings {
+        settingsArray.first ?? {
+            let s = AppSettings(); context.insert(s); return s
+        }()
+    }
 
     var body: some View {
         NavigationStack {
@@ -97,7 +118,10 @@ struct MacroPlannerView: View {
                     .padding(.vertical, 6)
 
                     Button {
-                        Task { await runEstimate() }
+                        if !settings.hasFullUnlock { showingUpgradeAlert = true } else {
+                            Task { await runEstimate() }
+                        }
+
                     } label: {
                         HStack(spacing: 8) {
                             if isLoading { ProgressView() }
@@ -162,6 +186,11 @@ struct MacroPlannerView: View {
             .listSectionSpacing(20)
             .navigationTitle("Macro Planner")
             .toolbar { ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } } }
+            .sheet(isPresented: $showingUpgradeSheet) { UpgradeView() }
+            .alert("Upgrade required", isPresented: $showingUpgradeAlert) {
+                Button("Not now", role: .cancel) {}
+                Button("Upgrade") { showingUpgradeSheet = true }
+            } message: { Text("Upgrade to create Macro Plans.") }
         }
     }
 

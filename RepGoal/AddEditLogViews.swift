@@ -1,7 +1,7 @@
 //
 //  AddEditLogViews.swift (v14)
-import SwiftUI
 import SwiftData
+import SwiftUI
 
 struct AddExerciseView: View {
     @Environment(\.modelContext) private var context
@@ -72,7 +72,7 @@ struct AddExerciseView: View {
     }
 
     private func shortLabel(for weekday: Int) -> String {
-        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
+        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
         return syms[(weekday - 1 + syms.count) % syms.count]
     }
 }
@@ -168,7 +168,7 @@ struct EditExerciseView: View {
     }
 
     private func shortLabel(for weekday: Int) -> String {
-        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
+        let syms = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
         return syms[(weekday - 1 + syms.count) % syms.count]
     }
 }
