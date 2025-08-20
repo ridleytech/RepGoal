@@ -1,6 +1,5 @@
 //
-//  Models.swift (v10)
-//
+//  Models.swift (v13)
 import Foundation
 import SwiftData
 
@@ -9,11 +8,9 @@ import SwiftData
     var name: String
     var dailyGoal: Int
     var createdAt: Date
-    /// Active weekdays (1=Sun ... 7=Sat)
     var scheduledWeekdays: [Int]
     @Relationship(deleteRule: .cascade, inverse: \RepEntry.exercise)
     var entries: [RepEntry] = []
-
     init(name: String, dailyGoal: Int, scheduledWeekdays: [Int] = Array(1...7), id: UUID = UUID(), createdAt: Date = Date()) {
         self.id = id; self.name = name; self.dailyGoal = dailyGoal; self.scheduledWeekdays = scheduledWeekdays; self.createdAt = createdAt
     }

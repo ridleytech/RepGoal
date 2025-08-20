@@ -1,6 +1,5 @@
 //
-//  AddEditLogViews.swift (v10)
-//
+//  AddEditLogViews.swift (v14)
 import SwiftUI
 import SwiftData
 
@@ -17,37 +16,55 @@ struct AddExerciseView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Exercise") { TextField("Name (e.g., Push‑ups)", text: $name) }
-                Section("Goal (per active day)") {
+                Section {
+                    TextField("Name (e.g., Push‑ups)", text: $name)
+                } header: { AppStyle.header("Exercise") }
+
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Stepper(value: $goal, in: 1...10000, step: 5) {
                             HStack { Text("Reps per day"); Spacer(); Text("\(goal)").monospacedDigit().foregroundStyle(.secondary) }
                         }
-                        HStack { Button("+5") { goal = min(10000, goal + 5) }.buttonStyle(BorderedButtonStyle()); Button("+10") { goal = min(10000, goal + 10) }.buttonStyle(BorderedButtonStyle()) }
+                        HStack {
+                            Button("+5") { goal = min(10000, goal + 5) }.buttonStyle(BorderedButtonStyle())
+                            Button("+10") { goal = min(10000, goal + 10) }.buttonStyle(BorderedButtonStyle())
+                        }
                     }
-                }
-                Section("Schedule") {
+                } header: { AppStyle.header("Goal (per active day)") }
+
+                Section {
                     HStack(spacing: 6) {
                         ForEach(weekDays, id: \.self) { d in
                             let on = selectedDays.contains(d)
-                            Button(shortLabel(for: d)) { if on { selectedDays.remove(d) } else { selectedDays.insert(d) } }
-                                .buttonStyle(BorderedButtonStyle())
-                                .tint(on ? palette.onTint : palette.offTint)
+                            Button(shortLabel(for: d)) {
+                                if on { selectedDays.remove(d) } else { selectedDays.insert(d) }
+                            }
+                            .buttonStyle(BorderedButtonStyle())
+                            .tint(on ? palette.onTint : palette.offTint)
                         }
                     }
-                    Text("Choose the days this goal is active.").font(.footnote).foregroundStyle(.secondary)
-                }
+                    Text("Choose the days this goal is active.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } header: { AppStyle.header("Schedule") }
             }
             .navigationTitle("New Exercise")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } }
-                ToolbarItem(placement: .topBarTrailing) { Button("Save", action: save).disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedDays.isEmpty) }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save", action: save)
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || selectedDays.isEmpty)
+                }
             }
         }
     }
 
     private func save() {
-        let ex = Exercise(name: name.trimmingCharacters(in: .whitespacesAndNewlines), dailyGoal: goal, scheduledWeekdays: Array(selectedDays).sorted())
+        let ex = Exercise(
+            name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+            dailyGoal: goal,
+            scheduledWeekdays: Array(selectedDays).sorted()
+        )
         context.insert(ex)
         try? context.save()
         LocalReminderScheduler.rescheduleAll(using: context)
@@ -68,15 +85,20 @@ struct GoalEditorView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Daily Goal") {
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Stepper(value: $exercise.dailyGoal, in: 1...10000, step: 5) {
                             HStack { Text("Reps per day"); Spacer(); Text("\(exercise.dailyGoal)").monospacedDigit().foregroundStyle(.secondary) }
                         }
-                        HStack { Button("+5") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 5) }.buttonStyle(BorderedButtonStyle()); Button("+10") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 10) }.buttonStyle(BorderedButtonStyle()) }
+                        HStack {
+                            Button("+5") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 5) }.buttonStyle(BorderedButtonStyle())
+                            Button("+10") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 10) }.buttonStyle(BorderedButtonStyle())
+                        }
                     }
-                    Text("Changing the goal updates your progress bar immediately.").font(.footnote).foregroundStyle(.secondary)
-                }
+                    Text("Changing the goal updates your progress bar immediately.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } header: { AppStyle.header("Daily Goal") }
             }
             .navigationTitle("Daily Goal")
             .toolbar {
@@ -97,16 +119,23 @@ struct EditExerciseView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Exercise") { TextField("Name", text: $exercise.name) }
-                Section("Goal (per active day)") {
+                Section {
+                    TextField("Name", text: $exercise.name)
+                } header: { AppStyle.header("Exercise") }
+
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         Stepper(value: $exercise.dailyGoal, in: 1...10000, step: 5) {
                             HStack { Text("Reps per day"); Spacer(); Text("\(exercise.dailyGoal)").monospacedDigit().foregroundStyle(.secondary) }
                         }
-                        HStack { Button("+5") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 5) }.buttonStyle(BorderedButtonStyle()); Button("+10") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 10) }.buttonStyle(BorderedButtonStyle()) }
+                        HStack {
+                            Button("+5") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 5) }.buttonStyle(BorderedButtonStyle())
+                            Button("+10") { exercise.dailyGoal = min(10000, exercise.dailyGoal + 10) }.buttonStyle(BorderedButtonStyle())
+                        }
                     }
-                }
-                Section("Schedule") {
+                } header: { AppStyle.header("Goal (per active day)") }
+
+                Section {
                     HStack(spacing: 6) {
                         ForEach(weekDays, id: \.self) { d in
                             let on = exercise.scheduledWeekdays.contains(d)
@@ -119,13 +148,21 @@ struct EditExerciseView: View {
                             .tint(on ? palette.onTint : palette.offTint)
                         }
                     }
-                    Text("Choose the days this goal is active.").font(.footnote).foregroundStyle(.secondary)
-                }
+                    Text("Choose the days this goal is active.")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } header: { AppStyle.header("Schedule") }
             }
             .navigationTitle("Edit Exercise")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) { Button("Close") { dismiss() } }
-                ToolbarItem(placement: .topBarTrailing) { Button("Save") { try? context.save(); LocalReminderScheduler.rescheduleAll(using: context); dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Save") {
+                        try? context.save()
+                        LocalReminderScheduler.rescheduleAll(using: context)
+                        dismiss()
+                    }
+                }
             }
         }
     }
@@ -148,12 +185,15 @@ struct LogRepsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Exercise") {
+                Section {
                     LabeledContent("Name", value: exercise.name)
                     LabeledContent("Daily Goal", value: String(exercise.dailyGoal))
-                }
-                Section("Log Progress") {
-                    TextField("Enter today's total", value: $currentTotal, format: .number).keyboardType(.numberPad).focused($valueFieldFocused)
+                } header: { AppStyle.header("Exercise") }
+
+                Section {
+                    TextField("Enter today's total", value: $currentTotal, format: .number)
+                        .keyboardType(.numberPad)
+                        .focused($valueFieldFocused)
                     Stepper(value: $currentTotal, in: 0...100000, step: 1) {
                         HStack { Text("Current total today"); Spacer(); Text("\(currentTotal)").monospacedDigit().foregroundStyle(.secondary) }
                     }
@@ -163,8 +203,10 @@ struct LogRepsView: View {
                         Spacer()
                         Button("Reset") { currentTotal = 0 }.buttonStyle(BorderedButtonStyle())
                     }
-                    Text("Tip: enter the total you've done *so far* today (not the increment).").font(.footnote).foregroundStyle(.secondary)
-                }
+                    Text("Tip: enter the total you've done *so far* today (not the increment).")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                } header: { AppStyle.header("Log Progress") }
             }
             .navigationTitle("Log Reps")
             .toolbar {
@@ -177,7 +219,9 @@ struct LogRepsView: View {
     }
 
     private func preload() {
-        do { currentTotal = try DataService.todaysProgress(for: exercise, context: context) } catch { currentTotal = 0 }
+        do {
+            currentTotal = try DataService.todaysProgress(for: exercise, context: context)
+        } catch { currentTotal = 0 }
     }
 
     private func upsertSave() {

@@ -1,6 +1,5 @@
 //
-//  App.swift (v10)
-//
+//  App.swift (v13)
 import SwiftUI
 import SwiftData
 import UserNotifications
@@ -9,6 +8,7 @@ import BackgroundTasks
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        AppStyle.applyNavigationTitleSizing()
         BackgroundScheduler.register()
         requestNotificationAuthorization()
         BackgroundScheduler.scheduleNextCheck()

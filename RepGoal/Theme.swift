@@ -1,6 +1,5 @@
 //
-//  Theme.swift (v10)
-//
+//  Theme.swift (v13)
 import SwiftUI
 
 struct ThemePalette {
@@ -53,17 +52,16 @@ enum ThemeOption: Int, CaseIterable, Identifiable {
             return ThemePalette(onTint: Color(hex: 0xD946EF), offTint: Color(hex: 0xF9A8D4), text: Color(hex: 0x3B0764), background: Color(hex: 0xFFF1F2))
         case .highContrast:
             return ThemePalette(onTint: .black, offTint: .gray, text: .black, background: .white)
-        // Near-black backgrounds (not pure black) to avoid harsh contrast
         case .midnight:
-            return ThemePalette(onTint: Color(hex: 0x60A5FA), offTint: Color.white.opacity(0.40), text: .white, background: Color(hex: 0x0F1115)) // deep charcoal
+            return ThemePalette(onTint: Color(hex: 0x60A5FA), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x0F1115))
         case .neonDark:
-            return ThemePalette(onTint: Color(hex: 0x22D3EE), offTint: Color.white.opacity(0.40), text: .white, background: Color(hex: 0x101418)) // blue-black
+            return ThemePalette(onTint: Color(hex: 0x22D3EE), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x101418))
         case .amberDark:
-            return ThemePalette(onTint: Color(hex: 0xF59E0B), offTint: Color.white.opacity(0.40), text: .white, background: Color(hex: 0x121214)) // warm charcoal
+            return ThemePalette(onTint: Color(hex: 0xF59E0B), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x121214))
         case .aquaDark:
-            return ThemePalette(onTint: Color(hex: 0x34D399), offTint: Color.white.opacity(0.40), text: .white, background: Color(hex: 0x0E1412)) // green-black
+            return ThemePalette(onTint: Color(hex: 0x34D399), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x0E1412))
         case .crimsonDark:
-            return ThemePalette(onTint: Color(hex: 0xF43F5E), offTint: Color.white.opacity(0.40), text: .white, background: Color(hex: 0x141014)) // plum-black
+            return ThemePalette(onTint: Color(hex: 0xF43F5E), offTint: .white.opacity(0.5), text: .white, background: Color(hex: 0x141014))
         }
     }
     var swatch: [Color] { [palette.onTint, palette.offTint, palette.text, palette.background] }
@@ -103,9 +101,22 @@ struct Themed: ViewModifier {
             .preferredColorScheme(isDark ? .dark : .light)
     }
 }
-
 extension View {
-    func themed(palette: ThemePalette, isDark: Bool) -> some View {
-        self.modifier(Themed(palette: palette, isDark: isDark))
+    func themed(palette: ThemePalette, isDark: Bool) -> some View { self.modifier(Themed(palette: palette, isDark: isDark)) }
+}
+
+struct ThemedProminentButtonStyle: ButtonStyle {
+    let palette: ThemePalette
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.headline)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .background(palette.onTint)
+            .foregroundStyle(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .opacity(configuration.isPressed ? 0.92 : 1.0)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }

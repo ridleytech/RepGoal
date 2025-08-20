@@ -1,12 +1,11 @@
 //
-//  ContentViews.swift (v10)
-//
-import SwiftData
+//  ContentViews.swift (v13)
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var context
-    @Query(FetchDescriptor<Exercise>(sortBy: [SortDescriptor(\Exercise.createdAt, order: .forward)])) private var exercises: [Exercise]
+    @Query(sort: [SortDescriptor(\Exercise.createdAt, order: .forward)]) private var exercises: [Exercise]
     @Query private var settingsArray: [AppSettings]
 
     @State private var showingAdd = false
@@ -47,8 +46,7 @@ struct ContentView: View {
                     for i in indexSet { context.delete(exercises[i]) }
                     LocalReminderScheduler.rescheduleAll(using: context)
                 }
-            }
-            .listStyle(.plain)
+            }.listStyle(.plain)
         }
     }
 
@@ -112,8 +110,8 @@ struct ExerciseRow: View {
 struct WeekdayStripe: View {
     let scheduled: [Int]
     let palette: ThemePalette
-    private let symbols: [String] = DateFormatter().veryShortWeekdaySymbols ?? ["S", "M", "T", "W", "T", "F", "S"]
-    private let indices: [Int] = Array(0 ..< 7)
+    private let symbols: [String] = DateFormatter().veryShortWeekdaySymbols ?? ["S","M","T","W","T","F","S"]
+    private let indices: [Int] = Array(0..<7)
     var body: some View {
         HStack(spacing: 4) {
             ForEach(indices, id: \.self) { i in

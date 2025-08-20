@@ -1,6 +1,5 @@
 //
-//  Scheduler.swift (v10)
-//
+//  Scheduler.swift (v13)
 import Foundation
 import BackgroundTasks
 import SwiftData
